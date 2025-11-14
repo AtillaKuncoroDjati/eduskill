@@ -10,6 +10,7 @@ use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\User\ProfileController;
 
 use App\Http\Controllers\Admin\KursusController;
+use App\Http\Controllers\Admin\MateriController;
 
 /*
 |--------------------------------------------------------------------------
@@ -84,8 +85,14 @@ Route::middleware(['auth', 'check.access'])->group(function () {
         Route::post('delete', [KursusController::class, 'delete'])->name('admin.kursus.delete');
     });
 
-    // [ADMIN] | Halaman untuk penggunaan (hanya untuk admin)
-    // Route::prefix('admin/kursus')->middleware('access:admin')->group(function () {
-    //     Route::get('/', [KursusController::class, 'index'])->name('admin.kursus.index');
-    // });
+    // [ADMIN] | Halaman untuk mengatur materi kursus (hanya untuk admin)
+    Route::prefix('admin/materi')->middleware('access:admin')->group(function () {
+        Route::get('{id}', [MateriController::class, 'materi_index'])->name('admin.materi.index');
+        Route::get('{id}/create', [MateriController::class, 'materi_create'])->name('admin.materi.create');
+        Route::get('{id}/edit/{materi}', [MateriController::class, 'materi_edit'])->name('admin.materi.edit');
+        Route::post('store', [MateriController::class, 'materi_store'])->name('admin.materi.store');
+        Route::post('{materi}/update', [MateriController::class, 'materi_update'])->name('admin.materi.update');
+        Route::post('request/data', [MateriController::class, 'materi_request'])->name('admin.materi.request');
+        Route::post('delete', [MateriController::class, 'materi_delete'])->name('admin.materi.delete');
+    });
 });

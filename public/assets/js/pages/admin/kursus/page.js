@@ -119,7 +119,7 @@ jQuery.index = {
                                     </button>
                                     <button class="btn btn-sm btn-soft-primary btn-module w-100"
                                         data-id="${data.id}" data-name="${data.title}">
-                                        <i class="ti ti-book-2 align-middle me-1 fs-18"></i> Akses Materi
+                                        <i class="ti ti-book-2 align-middle me-1 fs-18"></i> Materi
                                     </button>
                                 </div>
                             `;
@@ -175,6 +175,11 @@ jQuery.index = {
         $(document).on('click', '.btn-edit', function () {
             var id = $(this).data('id');
             window.location.href = '/admin/kursus/' + id + '/edit';
+        });
+
+        $(document).on('click', '.btn-module', function () {
+            var id = $(this).data('id');
+            window.location.href = '/admin/materi/' + id;
         });
 
         $("#ohmytable").on('click', 'button.btn-hapus', function () {

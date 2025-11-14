@@ -6,23 +6,21 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Kursus extends Model
+class Materi extends Model
 {
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'thumbnail',
+        'kursus_id',
         'title',
-        'short_description',
-        'description',
-        'category',
-        'difficulty',
-        'certificate',
+        'content',
+        'order',
         'status',
+        'is_quiz',
     ];
 
-    public function materis()
+    public function kursus()
     {
-        return $this->hasMany(Materi::class);
+        return $this->belongsTo(Kursus::class);
     }
 }
