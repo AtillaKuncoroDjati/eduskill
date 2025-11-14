@@ -79,7 +79,7 @@
         </div>
     </div>
 
-    <form id="form-delete" style="display: none;" action="#" method="POST">
+    <form id="form-delete" style="display: none;" action="{{ route('admin.kursus.delete') }}" method="POST">
         @csrf
         <input id="id-delete" name="id" type="hidden">
     </form>

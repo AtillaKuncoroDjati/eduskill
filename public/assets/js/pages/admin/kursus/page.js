@@ -36,7 +36,6 @@ jQuery.index = {
                 }
             },
             columns: [
-                // Kolom #
                 {
                     data: null,
                     className: 'text-center fw-bold align-middle',
@@ -45,51 +44,47 @@ jQuery.index = {
                         return meta.row + meta.settings._iDisplayStart + 1;
                     }
                 },
-                // Kolom Gambar
                 {
                     data: 'thumbnail',
                     className: 'text-center align-middle',
                     width: '15%',
                     render: function (thumbnail) {
                         return `
-                <img src="/uploads/kursus/${thumbnail}"
-                     alt="Thumbnail"
-                     class="img-fluid rounded"
-                     style="width:120px; height:120px; object-fit:cover;"/>
-            `;
+                                <img src="/uploads/kursus/${thumbnail}"
+                                    alt="Thumbnail"
+                                    class="img-fluid rounded"
+                                    style="width:120px; height:120px; object-fit:cover;"/>
+                            `;
                     }
                 },
-                // Kolom Judul
                 {
                     data: null,
                     className: 'text-start align-middle',
                     width: '25%',
                     render: function (data) {
                         return `
-                <div>
-                    <strong>${data.title}</strong>
-                    <hr class="my-1"/>
-                    <small class="text-muted">${data.short_description}</small>
-                </div>
-            `;
+                                <div>
+                                    <strong>${data.title}</strong>
+                                    <hr class="my-1"/>
+                                    <small class="text-muted">${data.short_description}</small>
+                                </div>
+                            `;
                     }
                 },
-                // Kolom Informasi
                 {
                     data: null,
                     className: 'text-start align-middle',
                     width: '25%',
                     render: function (data) {
                         return `
-                <div>
-                    <b>Kategori:</b> ${data.category}<br>
-                    <b>Tingkat Kesulitan:</b> ${data.difficulty}<br>
-                    <b>Sertifikat:</b> ${data.certificate ? 'Ya' : 'Tidak'}
-                </div>
-            `;
+                                <div>
+                                    <b>Kategori:</b> ${data.category}<br>
+                                    <b>Tingkat Kesulitan:</b> ${data.difficulty}<br>
+                                    <b>Sertifikat:</b> ${data.certificate ? 'Ya' : 'Tidak'}
+                                </div>
+                            `;
                     }
                 },
-                // Kolom Status
                 {
                     data: 'status',
                     className: 'text-center align-middle',
@@ -107,24 +102,27 @@ jQuery.index = {
                         }
                     }
                 },
-                // Kolom Aksi
                 {
                     data: null,
                     className: 'text-center align-middle',
                     width: '20%',
                     render: function (data) {
                         return `
-                <div class="d-grid gap-2">
-                    <button class="btn btn-sm btn-soft-warning btn-edit w-100"
-                        data-id="${data.id}" data-name="${data.title}">
-                        <i class="ti ti-pencil align-middle me-1 fs-18"></i> Ubah
-                    </button>
-                    <button class="btn btn-sm btn-soft-danger btn-hapus w-100"
-                        data-id="${data.id}" data-name="${data.title}">
-                        <i class="ti ti-trash align-middle me-1 fs-18"></i> Hapus
-                    </button>
-                </div>
-            `;
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-soft-warning btn-edit w-100"
+                                        data-id="${data.id}" data-name="${data.title}">
+                                        <i class="ti ti-pencil align-middle me-1 fs-18"></i> Ubah
+                                    </button>
+                                    <button class="btn btn-sm btn-soft-danger btn-hapus w-100"
+                                        data-id="${data.id}" data-name="${data.title}">
+                                        <i class="ti ti-trash align-middle me-1 fs-18"></i> Hapus
+                                    </button>
+                                    <button class="btn btn-sm btn-soft-primary btn-module w-100"
+                                        data-id="${data.id}" data-name="${data.title}">
+                                        <i class="ti ti-book-2 align-middle me-1 fs-18"></i> Akses Materi
+                                    </button>
+                                </div>
+                            `;
                     }
                 }
             ],
@@ -172,6 +170,39 @@ jQuery.index = {
             e.preventDefault();
             self.data.statusFilter = $(this).data('status');
             self.data.table.ajax.reload();
+        });
+
+        $(document).on('click', '.btn-edit', function () {
+            var id = $(this).data('id');
+            window.location.href = '/admin/kursus/' + id + '/edit';
+        });
+
+        $("#ohmytable").on('click', 'button.btn-hapus', function () {
+            var id = $(this).data("id");
+            var name = $(this).data("name");
+
+            $.confirm({
+                title: 'Konfirmasi Hapus',
+                type: 'orange',
+                columnClass: 'small',
+                content: 'Apakah Anda yakin ingin menghapus kursus <strong>' + name + '</strong>? Data yang telah dihapus tidak dapat dikembalikan lagi.',
+                buttons: {
+                    cancel: {
+                        text: 'Tidak',
+                        btnClass: 'btn-red',
+                        keys: ['esc']
+                    },
+                    confirm: {
+                        text: 'Ya, Saya Yakin',
+                        btnClass: 'btn-green',
+                        keys: ['enter'],
+                        action: function () {
+                            $("#id-delete").val(id)
+                            $("#form-delete").submit();
+                        }
+                    }
+                }
+            });
         });
     }
 };

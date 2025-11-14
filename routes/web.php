@@ -77,8 +77,11 @@ Route::middleware(['auth', 'check.access'])->group(function () {
     Route::prefix('admin/kursus')->middleware('access:admin')->group(function () {
         Route::get('/', [KursusController::class, 'index'])->name('admin.kursus.index');
         Route::get('create', [KursusController::class, 'create'])->name('admin.kursus.create');
+        Route::get('{kursus}/edit', [KursusController::class, 'edit'])->name('admin.kursus.edit');
         Route::post('store', [KursusController::class, 'store'])->name('admin.kursus.store');
+        Route::post('{kursus}/update', [KursusController::class, 'update'])->name('admin.kursus.update');
         Route::post('request/data', [KursusController::class, 'request'])->name('admin.kursus.request');
+        Route::post('delete', [KursusController::class, 'delete'])->name('admin.kursus.delete');
     });
 
     // [ADMIN] | Halaman untuk penggunaan (hanya untuk admin)
