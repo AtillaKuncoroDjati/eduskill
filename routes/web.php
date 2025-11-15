@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ContentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -11,6 +12,7 @@ use App\Http\Controllers\User\ProfileController;
 
 use App\Http\Controllers\Admin\KursusController;
 use App\Http\Controllers\Admin\MateriController;
+use App\Http\Controllers\Admin\ModuleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -74,25 +76,49 @@ Route::middleware(['auth', 'check.access'])->group(function () {
         Route::post('{user}/update-whatsapp-setting', [ProfileController::class, 'update_whatsapp_setting'])->name('user.profile.update_whatsapp_setting');
     });
 
-    // [ADMIN] | Halaman untuk mengatur kursus (hanya untuk admin)
     Route::prefix('admin/kursus')->middleware('access:admin')->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Route Modul Kursus (Ditaruh paling atas agar tidak bentrok dengan {kursus})
+        |--------------------------------------------------------------------------
+        */
+
+        // CRUD Modul
+        Route::post('modules/update', [ModuleController::class, 'update'])->name('admin.module.update');
+        Route::post('modules/delete', [ModuleController::class, 'delete'])->name('admin.module.delete');
+        Route::post('modules/update-order', [ModuleController::class, 'updateOrder'])->name('admin.module.updateOrder');
+
+        // Detail modul
+        Route::get('module/{module}/detail', [ModuleController::class, 'detail'])->name('admin.module.detail');
+
+        // Store modul (ada kursus id)
+        Route::post('{kursus}/modules/store', [ModuleController::class, 'store'])->name('admin.module.store');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Route Konten Modul
+        |--------------------------------------------------------------------------
+        */
+        Route::post('module/{module}/content/store', [ContentController::class, 'store'])->name('admin.content.store');
+        Route::post('content/update-order', [ContentController::class, 'updateOrder'])->name('admin.content.updateOrder');
+        Route::post('content/delete', [ContentController::class, 'delete'])->name('admin.content.delete');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Route Kursus
+        |--------------------------------------------------------------------------
+        */
         Route::get('/', [KursusController::class, 'index'])->name('admin.kursus.index');
         Route::get('create', [KursusController::class, 'create'])->name('admin.kursus.create');
-        Route::get('{kursus}/edit', [KursusController::class, 'edit'])->name('admin.kursus.edit');
         Route::post('store', [KursusController::class, 'store'])->name('admin.kursus.store');
+
+        Route::get('{kursus}/edit', [KursusController::class, 'edit'])->name('admin.kursus.edit');
         Route::post('{kursus}/update', [KursusController::class, 'update'])->name('admin.kursus.update');
+
         Route::post('request/data', [KursusController::class, 'request'])->name('admin.kursus.request');
         Route::post('delete', [KursusController::class, 'delete'])->name('admin.kursus.delete');
-    });
-
-    // [ADMIN] | Halaman untuk mengatur materi kursus (hanya untuk admin)
-    Route::prefix('admin/materi')->middleware('access:admin')->group(function () {
-        Route::get('{id}', [MateriController::class, 'materi_index'])->name('admin.materi.index');
-        Route::get('{id}/create', [MateriController::class, 'materi_create'])->name('admin.materi.create');
-        Route::get('{id}/edit/{materi}', [MateriController::class, 'materi_edit'])->name('admin.materi.edit');
-        Route::post('store', [MateriController::class, 'materi_store'])->name('admin.materi.store');
-        Route::post('{materi}/update', [MateriController::class, 'materi_update'])->name('admin.materi.update');
-        Route::post('request/data', [MateriController::class, 'materi_request'])->name('admin.materi.request');
-        Route::post('delete', [MateriController::class, 'materi_delete'])->name('admin.materi.delete');
     });
 });

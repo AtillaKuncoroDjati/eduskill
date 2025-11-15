@@ -21,8 +21,8 @@ class Kursus extends Model
         'status',
     ];
 
-    public function materis()
+    public function modules()
     {
-        return $this->hasMany(Materi::class);
+        return $this->hasMany(Module::class)->orderBy('order', 'asc');
     }
 }

@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('materis', function (Blueprint $table) {
+        Schema::create('contents', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('kursus_id');
-            $table->foreign('kursus_id')->references('id')->on('kursuses')->onDelete('cascade');
-            $table->string('title');
+            $table->uuid('module_id');
+
+            $table->enum('type', ['text', 'image', 'video', 'quiz']);
             $table->longText('content')->nullable();
+
             $table->integer('order')->default(0);
-            $table->enum('status', ['aktif', 'nonaktif'])->default('aktif');
-            $table->boolean('is_quiz')->default(false);
+
+            $table->foreign('module_id')->references('id')->on('modules')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('materis');
+        Schema::dropIfExists('contents');
     }
 };

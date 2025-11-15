@@ -63,7 +63,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="text-center">#</th>
-                                <th class="text-center text-uppercase">Gambar</th>
+                                <th class="text-center text-uppercase">Thumbnail</th>
                                 <th class="text-center text-uppercase">Judul</th>
                                 <th class="text-center text-uppercase">Informasi</th>
                                 <th class="text-center text-uppercase">Status</th>

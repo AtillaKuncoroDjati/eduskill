@@ -49,12 +49,21 @@ jQuery.index = {
                     className: 'text-center align-middle',
                     width: '15%',
                     render: function (thumbnail) {
-                        return `
+                        if (thumbnail) {
+                            return `
                                 <img src="/uploads/kursus/${thumbnail}"
                                     alt="Thumbnail"
                                     class="img-fluid rounded"
-                                    style="width:120px; height:120px; object-fit:cover;"/>
+                                    style="width:160px; height:auto; object-fit:cover;" />
                             `;
+                        } else {
+                            return `
+                                <img src="/uploads/kursus/default-thumbnail.jpg"
+                                    alt="Thumbnail"
+                                    class="img-fluid rounded"
+                                    style="width:120px; height:120px; object-fit:cover;" />
+                            `;
+                        }
                     }
                 },
                 {
@@ -117,10 +126,6 @@ jQuery.index = {
                                         data-id="${data.id}" data-name="${data.title}">
                                         <i class="ti ti-trash align-middle me-1 fs-18"></i> Hapus
                                     </button>
-                                    <button class="btn btn-sm btn-soft-primary btn-module w-100"
-                                        data-id="${data.id}" data-name="${data.title}">
-                                        <i class="ti ti-book-2 align-middle me-1 fs-18"></i> Materi
-                                    </button>
                                 </div>
                             `;
                     }
@@ -175,11 +180,6 @@ jQuery.index = {
         $(document).on('click', '.btn-edit', function () {
             var id = $(this).data('id');
             window.location.href = '/admin/kursus/' + id + '/edit';
-        });
-
-        $(document).on('click', '.btn-module', function () {
-            var id = $(this).data('id');
-            window.location.href = '/admin/materi/' + id;
         });
 
         $("#ohmytable").on('click', 'button.btn-hapus', function () {
