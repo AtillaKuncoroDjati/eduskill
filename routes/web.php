@@ -101,8 +101,10 @@ Route::middleware(['auth', 'check.access'])->group(function () {
         | Route Konten Modul
         |--------------------------------------------------------------------------
         */
+        Route::get('content/{content}/quiz-data', [ContentController::class, 'quiz'])->name('admin.content.quiz');
         Route::post('module/{module}/content/store', [ContentController::class, 'store'])->name('admin.content.store');
         Route::post('content/update-order', [ContentController::class, 'updateOrder'])->name('admin.content.updateOrder');
+        Route::post('content/update', [ContentController::class, 'update'])->name('admin.content.update');
         Route::post('content/delete', [ContentController::class, 'delete'])->name('admin.content.delete');
 
 

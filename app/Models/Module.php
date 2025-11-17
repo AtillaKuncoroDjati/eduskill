@@ -23,6 +23,6 @@ class Module extends Model
 
     public function contents()
     {
-        return $this->hasMany(Content::class)->orderBy('order');
+        return $this->hasMany(Content::class, 'module_id')->orderBy('order');
     }
 }

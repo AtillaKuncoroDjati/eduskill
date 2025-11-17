@@ -12,6 +12,7 @@ class Content extends Model
 
     protected $fillable = [
         'module_id',
+        'title',
         'type',
         'content',
         'order'
@@ -20,5 +21,10 @@ class Content extends Model
     public function module()
     {
         return $this->belongsTo(Module::class);
+    }
+
+    public function questions()
+    {
+        return $this->hasMany(QuizQuestion::class, 'content_id')->orderBy('order');
     }
 }
