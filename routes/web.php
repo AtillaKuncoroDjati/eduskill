@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\ContentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -12,7 +11,10 @@ use App\Http\Controllers\User\ProfileController;
 
 use App\Http\Controllers\Admin\KursusController;
 use App\Http\Controllers\Admin\MateriController;
+use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\ModuleController;
+
+use App\Http\Controllers\User\ListKursusController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,7 +79,6 @@ Route::middleware(['auth', 'check.access'])->group(function () {
     });
 
     Route::prefix('admin/kursus')->middleware('access:admin')->group(function () {
-
         /*
         |--------------------------------------------------------------------------
         | Route Modul Kursus (Ditaruh paling atas agar tidak bentrok dengan {kursus})
@@ -95,7 +96,6 @@ Route::middleware(['auth', 'check.access'])->group(function () {
         // Store modul (ada kursus id)
         Route::post('{kursus}/modules/store', [ModuleController::class, 'store'])->name('admin.module.store');
 
-
         /*
         |--------------------------------------------------------------------------
         | Route Konten Modul
@@ -106,7 +106,6 @@ Route::middleware(['auth', 'check.access'])->group(function () {
         Route::post('content/update-order', [ContentController::class, 'updateOrder'])->name('admin.content.updateOrder');
         Route::post('content/update', [ContentController::class, 'update'])->name('admin.content.update');
         Route::post('content/delete', [ContentController::class, 'delete'])->name('admin.content.delete');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -122,5 +121,19 @@ Route::middleware(['auth', 'check.access'])->group(function () {
 
         Route::post('request/data', [KursusController::class, 'request'])->name('admin.kursus.request');
         Route::post('delete', [KursusController::class, 'delete'])->name('admin.kursus.delete');
+    });
+
+    Route::prefix('user/daftar-kursus')->group(function () {
+        /*
+        |--------------------------------------------------------------------------
+        | Route Kursus Pengguna
+        |--------------------------------------------------------------------------
+        */
+        Route::get('/', [ListKursusController::class, 'index'])->name('user.kursus.index');
+        Route::get('{kursus}', [ListKursusController::class, 'show'])->name('user.kursus.show');
+        Route::post('request', [ListKursusController::class, 'request'])->name('user.kursus.request');
+
+        Route::post('{kursus}/enroll', [ListKursusController::class, 'enroll'])->name('user.kursus.enroll');
+        Route::get('{kursus}/learn', [ListKursusController::class, 'learn'])->name('user.kursus.learn');
     });
 });

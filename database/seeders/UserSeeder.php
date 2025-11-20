@@ -24,7 +24,21 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
                 'password_changed_at' => now(),
                 'permission' => 'admin',
-                'status' => true,
+                'status' => 'aktif',
+                'is_email_notification_enabled' => true,
+                'is_whatsapp_notification_enabled' => false,
+                'active_device' => null
+            ],
+            [
+                'name' => 'Regular User',
+                'username' => 'user',
+                'email' => 'user@access.com',
+                'phone' => '089530695777',
+                'password' => Hash::make('/'),
+                'email_verified_at' => now(),
+                'password_changed_at' => now(),
+                'permission' => 'user',
+                'status' => 'aktif',
                 'is_email_notification_enabled' => true,
                 'is_whatsapp_notification_enabled' => false,
                 'active_device' => null

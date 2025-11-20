@@ -48,7 +48,7 @@
 
             @if (auth()->user()->permission === 'user')
                 <li class="side-nav-item">
-                    <a href="#" class="side-nav-link">
+                    <a href="{{ route('user.kursus.index') }}" class="side-nav-link">
                         <span class="menu-icon"><i class="ti ti-book"></i></span>
                         <span class="menu-text"> Daftar Kursus </span>
                     </a>
