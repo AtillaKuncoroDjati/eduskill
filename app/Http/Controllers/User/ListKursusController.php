@@ -5,8 +5,14 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Content;
 use App\Models\Kursus;
+use App\Models\UserContentProgress;
 use App\Models\UserCourse;
+use App\Models\UserQuizAnswer;
+use App\Models\UserQuizAttempt;
+use App\Models\User; // Tambahkan ini
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ListKursusController extends Controller
 {
@@ -42,9 +48,11 @@ class ListKursusController extends Controller
         $isEnrolled = false;
         $userCourse = null;
 
-        if (auth()->check()) {
-            $isEnrolled = auth()->user()->hasEnrolled($kursus->id);
-            $userCourse = auth()->user()->getEnrolledCourse($kursus->id);
+        if (Auth::check()) {
+            /** @var User $user */
+            $user = Auth::user();
+            $isEnrolled = $user->hasEnrolled($kursus->id);
+            $userCourse = $user->getEnrolledCourse($kursus->id);
         }
 
         return view('user.kursus.show', compact(
@@ -59,45 +67,48 @@ class ListKursusController extends Controller
 
     public function enroll($id)
     {
-        if (!auth()->check()) {
-            session()->flash('failed_message', 'Silakan login terlebih dahulu untuk mendaftar kursus.');
-            return to_route('auth.view');
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu');
         }
+
+        /** @var User $user */
+        $user = Auth::user();
 
         $kursus = Kursus::where('id', $id)->where('status', 'aktif')->firstOrFail();
 
-        if (auth()->user()->hasEnrolled($kursus->id)) {
+        if ($user->hasEnrolled($kursus->id)) {
             return redirect()->route('user.kursus.learn', $kursus->id);
         }
 
         UserCourse::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'kursus_id' => $kursus->id,
             'status' => 'enrolled',
             'enrolled_at' => now(),
         ]);
 
-        session()->flash('success_message', 'Berhasil mendaftar kursus! Selamat belajar dan semoga sukses.');
-        return redirect()->route('user.kursus.learn', $kursus->id);
+        return redirect()->route('user.kursus.learn', $kursus->id)
+            ->with('success', 'Berhasil mendaftar kursus!');
     }
 
     public function learn($id)
     {
-        if (!auth()->check()) {
-            session()->flash('failed_message', 'Silakan login terlebih dahulu untuk mengakses kursus.');
-            return to_route('auth.view');
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu');
         }
+
+        /** @var User $user */
+        $user = Auth::user();
 
         $kursus = Kursus::with([
             'modules.contents.questions.options'
         ])->findOrFail($id);
 
-        $userCourse = auth()->user()->getEnrolledCourse($kursus->id);
+        $userCourse = $user->getEnrolledCourse($kursus->id);
 
         if (!$userCourse) {
-            session()->flash('failed_message', 'Anda belum mendaftar kursus ini.');
-
-            return to_route('user.kursus.show', $kursus->id);
+            return redirect()->route('user.kursus.show', $kursus->id)
+                ->with('error', 'Anda belum mendaftar kursus ini');
         }
 
         if ($userCourse->status === 'enrolled') {
@@ -107,9 +118,267 @@ class ListKursusController extends Controller
             ]);
         }
 
-        $contentProgress = $userCourse->contentProgress()->pluck('is_completed', 'content_id');
+        $contentProgress = $userCourse->contentProgress()->pluck('is_completed', 'content_id')->toArray();
 
         return view('user.kursus.learn', compact('kursus', 'userCourse', 'contentProgress'));
+    }
+
+    public function getContent($kursusId, $contentId)
+    {
+        $content = Content::with(['questions.options', 'module'])
+            ->findOrFail($contentId);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $userCourse = $user->getEnrolledCourse($kursusId);
+        if (!$userCourse) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        if ($content->type === 'text') {
+            return response()->json([
+                'id' => $content->id,
+                'title' => $content->title,
+                'type' => $content->type,
+                'content' => nl2br($content->content),
+            ]);
+        } else if ($content->type === 'quiz') {
+            $latestAttempt = UserQuizAttempt::where('user_id', Auth::id())
+                ->where('content_id', $contentId)
+                ->where('user_course_id', $userCourse->id)
+                ->where('is_passed', true)
+                ->latest()
+                ->first();
+
+            if ($latestAttempt) {
+                $quizDetails = [];
+
+                foreach ($content->questions as $question) {
+                    $userAnswer = UserQuizAnswer::where('quiz_attempt_id', $latestAttempt->id)
+                        ->where('question_id', $question->id)
+                        ->with('selectedOption')
+                        ->first();
+
+                    $quizDetails[] = [
+                        'question' => $question->question,
+                        'options' => $question->options->map(function ($option) use ($userAnswer) {
+                            return [
+                                'id' => $option->id,
+                                'option_text' => $option->option_text,
+                                'is_correct' => $option->is_correct,
+                                'is_selected' => $userAnswer && $userAnswer->selected_option_id == $option->id,
+                            ];
+                        }),
+                        'user_is_correct' => $userAnswer ? $userAnswer->is_correct : false,
+                    ];
+                }
+
+                return response()->json([
+                    'id' => $content->id,
+                    'title' => $content->title,
+                    'type' => $content->type,
+                    'already_passed' => true,
+                    'attempt' => [
+                        'score' => $latestAttempt->score,
+                        'correct_answers' => $latestAttempt->correct_answers,
+                        'total_questions' => $latestAttempt->total_questions,
+                        'completed_at' => $latestAttempt->completed_at->format('d M Y H:i'),
+                    ],
+                    'quiz_details' => $quizDetails,
+                ]);
+            }
+
+            return response()->json([
+                'id' => $content->id,
+                'title' => $content->title,
+                'type' => $content->type,
+                'already_passed' => false,
+                'questions' => $content->questions->map(function ($question) {
+                    return [
+                        'id' => $question->id,
+                        'question' => $question->question,
+                        'options' => $question->options->map(function ($option) {
+                            return [
+                                'id' => $option->id,
+                                'option_text' => $option->option_text,
+                            ];
+                        }),
+                    ];
+                }),
+            ]);
+        }
+    }
+
+    public function markContentComplete($kursusId, $contentId)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $userCourse = $user->getEnrolledCourse($kursusId);
+
+        if (!$userCourse) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        $progress = UserContentProgress::where('user_id', Auth::id())
+            ->where('content_id', $contentId)
+            ->where('user_course_id', $userCourse->id)
+            ->first();
+
+        if (!$progress) {
+            $progress = UserContentProgress::create([
+                'user_id' => Auth::id(),
+                'content_id' => $contentId,
+                'user_course_id' => $userCourse->id,
+                'is_completed' => true,
+                'completed_at' => now(),
+            ]);
+        } else if (!$progress->is_completed) {
+            $progress->update([
+                'is_completed' => true,
+                'completed_at' => now(),
+            ]);
+        }
+
+        $this->updateCourseProgress($userCourse);
+
+        return response()->json([
+            'success' => true,
+            'progress' => $userCourse->fresh()->progress_percentage,
+        ]);
+    }
+
+    public function submitQuiz($kursusId, $contentId, Request $request)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $userCourse = $user->getEnrolledCourse($kursusId);
+
+        if (!$userCourse) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        $content = Content::with('questions.options')->findOrFail($contentId);
+
+        if ($content->type !== 'quiz') {
+            return response()->json(['error' => 'Not a quiz'], 400);
+        }
+
+        $answers = $request->input('answers', []);
+
+        DB::beginTransaction();
+        try {
+            $attempt = UserQuizAttempt::create([
+                'user_id' => Auth::id(),
+                'content_id' => $contentId,
+                'user_course_id' => $userCourse->id,
+                'total_questions' => $content->questions->count(),
+                'started_at' => now(),
+            ]);
+
+            $correctAnswers = 0;
+
+            foreach ($content->questions as $question) {
+                $answerKey = 'question_' . $question->id;
+                $selectedOptionId = $answers[$answerKey] ?? null;
+
+                if ($selectedOptionId) {
+                    $selectedOption = $question->options->where('id', $selectedOptionId)->first();
+                    $isCorrect = $selectedOption && $selectedOption->is_correct;
+
+                    if ($isCorrect) {
+                        $correctAnswers++;
+                    }
+
+                    UserQuizAnswer::create([
+                        'user_id' => Auth::id(),
+                        'quiz_attempt_id' => $attempt->id,
+                        'question_id' => $question->id,
+                        'selected_option_id' => $selectedOptionId,
+                        'is_correct' => $isCorrect,
+                    ]);
+                }
+            }
+
+            $score = ($correctAnswers / $content->questions->count()) * 100;
+            $isPassed = $score >= 70;
+
+            $attempt->update([
+                'correct_answers' => $correctAnswers,
+                'score' => round($score),
+                'is_passed' => $isPassed,
+                'completed_at' => now(),
+            ]);
+
+            if ($isPassed) {
+                $progress = UserContentProgress::where('user_id', Auth::id())
+                    ->where('content_id', $contentId)
+                    ->where('user_course_id', $userCourse->id)
+                    ->first();
+
+                if (!$progress) {
+                    UserContentProgress::create([
+                        'user_id' => Auth::id(),
+                        'content_id' => $contentId,
+                        'user_course_id' => $userCourse->id,
+                        'is_completed' => true,
+                        'completed_at' => now(),
+                    ]);
+                } else if (!$progress->is_completed) {
+                    $progress->update([
+                        'is_completed' => true,
+                        'completed_at' => now(),
+                    ]);
+                }
+
+                $this->updateCourseProgress($userCourse);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'is_passed' => $isPassed,
+                'score' => round($score),
+                'correct_answers' => $correctAnswers,
+                'total_questions' => $content->questions->count(),
+                'progress' => $userCourse->fresh()->progress_percentage,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to submit quiz'], 500);
+        }
+    }
+
+    private function updateCourseProgress(UserCourse $userCourse)
+    {
+        $kursus = $userCourse->kursus()->with('modules.contents')->first();
+
+        $totalContents = 0;
+        foreach ($kursus->modules as $module) {
+            $totalContents += $module->contents->count();
+        }
+
+        if ($totalContents === 0) {
+            return;
+        }
+
+        $completedContents = $userCourse->contentProgress()
+            ->where('is_completed', true)
+            ->count();
+
+        $percentage = round(($completedContents / $totalContents) * 100);
+
+        $userCourse->update([
+            'progress_percentage' => $percentage,
+        ]);
+
+        if ($percentage >= 100) {
+            $userCourse->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+        }
     }
 
     public function request(Request $request)

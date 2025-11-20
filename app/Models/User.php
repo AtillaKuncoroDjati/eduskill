@@ -75,25 +75,42 @@ class User extends Authenticatable
         'is_whatsapp_notification_enabled' => true,
     ];
 
+    // ============================================
+    // RELASI UNTUK KURSUS
+    // ============================================
+
+    /**
+     * Relasi ke progress content user
+     */
     public function enrolledCourses()
     {
         return $this->hasMany(UserCourse::class);
     }
 
+    /**
+     * Relasi ke progress content user
+     */
     public function contentProgress()
     {
         return $this->hasMany(UserContentProgress::class);
     }
 
+    /**
+     * Relasi ke quiz attempts user
+     */
     public function quizAttempts()
     {
         return $this->hasMany(UserQuizAttempt::class);
     }
 
+    // ============================================
+    // HELPER METHODS
+    // ============================================
+
     /**
-     *  Cek apakah pengguna telah mendaftar pada kursus tertentu.
+     * Cek apakah user sudah enroll kursus tertentu
      *
-     * @param  int  $kursusId
+     * @param string $kursusId
      * @return bool
      */
     public function hasEnrolled($kursusId)

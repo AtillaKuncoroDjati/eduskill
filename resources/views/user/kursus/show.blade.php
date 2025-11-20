@@ -248,7 +248,7 @@
                         @auth
                             @if ($isEnrolled)
                                 <a href="{{ route('user.kursus.learn', $kursus->id) }}" class="btn btn-primary w-100">
-                                    <i class="ti ti-player-play"></i> Lanjutkan Belajar
+                                    <i class="ti ti-player-play me-1"></i> Lanjutkan Belajar
                                 </a>
 
                                 @if ($userCourse && $userCourse->progress_percentage > 0)

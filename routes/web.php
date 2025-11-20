@@ -135,5 +135,9 @@ Route::middleware(['auth', 'check.access'])->group(function () {
 
         Route::post('{kursus}/enroll', [ListKursusController::class, 'enroll'])->name('user.kursus.enroll');
         Route::get('{kursus}/learn', [ListKursusController::class, 'learn'])->name('user.kursus.learn');
+
+        Route::get('{kursus}/content/{content}', [ListKursusController::class, 'getContent'])->name('user.kursus.content');
+        Route::post('{kursus}/content/{content}/complete', [ListKursusController::class, 'markContentComplete'])->name('user.kursus.content.complete');
+        Route::post('{kursus}/quiz/{content}/submit', [ListKursusController::class, 'submitQuiz'])->name('user.kursus.quiz.submit');
     });
 });
