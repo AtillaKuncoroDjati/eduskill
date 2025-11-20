@@ -25,4 +25,24 @@ class Kursus extends Model
     {
         return $this->hasMany(Module::class)->orderBy('order', 'asc');
     }
+
+    public function userCourses()
+    {
+        return $this->hasMany(UserCourse::class, 'kursus_id');
+    }
+
+    public function getTotalPesertaAttribute()
+    {
+        return $this->userCourses()->count();
+    }
+
+    public function getPesertaAktifAttribute()
+    {
+        return $this->userCourses()->where('status', 'in_progress')->count();
+    }
+
+    public function getPesertaSelesaiAttribute()
+    {
+        return $this->userCourses()->where('status', 'completed')->count();
+    }
 }

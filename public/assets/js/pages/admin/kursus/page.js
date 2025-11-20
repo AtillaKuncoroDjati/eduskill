@@ -1,3 +1,5 @@
+// public/assets/js/pages/admin/kursus/page.js
+
 jQuery.index = {
     data: {
         table: null,
@@ -118,6 +120,10 @@ jQuery.index = {
                     render: function (data) {
                         return `
                                 <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-soft-info btn-peserta w-100"
+                                        data-id="${data.id}" data-name="${data.title}">
+                                        <i class="ti ti-users align-middle me-1 fs-18"></i> Peserta
+                                    </button>
                                     <button class="btn btn-sm btn-soft-warning btn-edit w-100"
                                         data-id="${data.id}" data-name="${data.title}">
                                         <i class="ti ti-pencil align-middle me-1 fs-18"></i> Ubah
@@ -175,6 +181,12 @@ jQuery.index = {
             e.preventDefault();
             self.data.statusFilter = $(this).data('status');
             self.data.table.ajax.reload();
+        });
+
+        // Event untuk tombol Lihat Peserta
+        $(document).on('click', '.btn-peserta', function () {
+            var id = $(this).data('id');
+            window.location.href = '/admin/kursus/' + id + '/peserta';
         });
 
         $(document).on('click', '.btn-edit', function () {

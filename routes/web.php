@@ -121,6 +121,9 @@ Route::middleware(['auth', 'check.access'])->group(function () {
 
         Route::post('request/data', [KursusController::class, 'request'])->name('admin.kursus.request');
         Route::post('delete', [KursusController::class, 'delete'])->name('admin.kursus.delete');
+
+        Route::get('{kursus}/peserta', [KursusController::class, 'peserta'])->name('admin.kursus.peserta');
+        Route::post('{kursus}/peserta/request', [KursusController::class, 'pesertaRequest'])->name('admin.kursus.peserta.request');
     });
 
     Route::prefix('user/daftar-kursus')->group(function () {

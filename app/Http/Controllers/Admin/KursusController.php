@@ -186,4 +186,42 @@ class KursusController extends Controller
             'data' => $data
         ]);
     }
+
+    public function peserta(Kursus $kursus)
+    {
+        return view('admin.kursus.peserta', compact('kursus'));
+    }
+
+    public function pesertaRequest(Request $request, Kursus $kursus)
+    {
+        $query = $kursus->userCourses()->with('user');
+
+        if ($request->has('search') && !empty($request->search['value'])) {
+            $search = $request->search['value'];
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('username', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->has('status_filter') && in_array($request->status_filter, ['enrolled', 'in_progress', 'completed'])) {
+            $query->where('status', $request->status_filter);
+        }
+
+        $total = $query->count();
+
+        if ($request->has('start') && $request->has('length')) {
+            $query->skip($request->input('start'))->take($request->input('length'));
+        }
+
+        $data = $query->orderBy('enrolled_at', 'desc')->get();
+
+        return response()->json([
+            'draw' => $request->input('draw', 1),
+            'recordsTotal' => $total,
+            'recordsFiltered' => $total,
+            'data' => $data
+        ]);
+    }
 }
