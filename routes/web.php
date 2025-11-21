@@ -140,7 +140,10 @@ Route::middleware(['auth', 'check.access'])->group(function () {
 
     Route::prefix('system/backup')->middleware('access:admin')->group(function () {
         Route::get('/', [BackupController::class, 'index'])->name('system.backup.index');
-        Route::get('/download', [BackupController::class, 'download'])->name('system.backup.download');
+        Route::get('download', [BackupController::class, 'download'])->name('system.backup.download');
+        Route::get('download/{filename}', [BackupController::class, 'downloadExisting'])->name('system.backup.download.existing');
+        Route::get('list', [BackupController::class, 'list'])->name('system.backup.list');
+        Route::delete('{filename}', [BackupController::class, 'deleteBackup'])->name('system.backup.delete');
     });
 
     Route::prefix('user/daftar-kursus')->group(function () {
