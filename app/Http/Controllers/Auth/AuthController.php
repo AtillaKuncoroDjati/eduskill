@@ -175,8 +175,8 @@ class AuthController extends Controller
         ]);
 
         $token = Str::uuid()->toString();
-        $name = User::where('email', $request->email)->first()->name;
         $user = User::where('email', $request->email)->first();
+        $name = $user->name;
 
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $request->email],
@@ -188,16 +188,28 @@ class AuthController extends Controller
 
         $delivery = [];
 
-        if ($user->is_whatsapp_notification_enabled) {
-            $message = "Halo {$name},\n\nSilakan klik tautan berikut untuk mereset kata sandi Anda:\n" . route('password.reset', ['token' => $token, 'email' => $request->email]) . "\n\nJika Anda tidak meminta reset kata sandi, abaikan pesan ini.";
+        $resetUrl = route('password.update.view', ['token' => $token]);
+
+        if ($user->is_whatsapp_notification_enabled && $user->phone) {
+            $message = "Halo *{$name}*,\n\n";
+            $message .= "Kami menerima permintaan untuk mereset kata sandi akun Anda.\n\n";
+            $message .= "Silakan klik tautan berikut untuk mereset kata sandi:\n";
+            $message .= "{$resetUrl}\n\n";
+            $message .= "Tautan ini berlaku selama 60 menit.\n\n";
+            $message .= "Jika Anda tidak meminta reset kata sandi, abaikan pesan ini.";
 
             WhatsappService::send($user->phone, $message);
-            $delivery[] = 'whatsapp';
+            $delivery[] = 'WhatsApp';
         }
 
         if ($user->is_email_notification_enabled) {
             Mail::to($user->email)->send(new PasswordReset($token, $request->email, $name));
-            $delivery[] = 'email';
+            $delivery[] = 'Email';
+        }
+
+        if (empty($delivery)) {
+            session()->flash('failed_message', 'Tidak ada metode notifikasi yang aktif. Silakan hubungi administrator.');
+            return back();
         }
 
         session()->put('reset_delivery', $delivery);
@@ -214,6 +226,13 @@ class AuthController extends Controller
             return redirect()->route('password.email');
         }
 
+        $createdAt = Carbon::parse($data->created_at);
+        if ($createdAt->addHour()->isPast()) {
+            DB::table('password_reset_tokens')->where('token', $token)->delete();
+            session()->flash('failed_message', 'Token reset kata sandi telah kedaluwarsa. Silakan ajukan permintaan baru.');
+            return redirect()->route('password.email');
+        }
+
         return view('auth.password_update', ['token' => $token, 'email' => $data->email]);
     }
 
@@ -223,7 +242,7 @@ class AuthController extends Controller
             'email' => 'required|email|exists:users,email',
             'password' => [
                 'required',
-                'min:6',
+                'min:8',
                 'confirmed',
                 new \App\Rules\StrongPassword()
             ],
@@ -232,7 +251,7 @@ class AuthController extends Controller
             'email.email' => 'Format email tidak valid.',
             'email.exists' => 'Email tidak ditemukan.',
             'password.required' => 'Kata sandi wajib diisi.',
-            'password.min' => 'Kata sandi minimal 6 karakter.',
+            'password.min' => 'Kata sandi minimal 8 karakter.',
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         ]);
 
@@ -244,6 +263,13 @@ class AuthController extends Controller
         if (!$data) {
             session()->flash('failed_message', 'Token tidak valid atau email tidak sesuai.');
             return back();
+        }
+
+        $createdAt = Carbon::parse($data->created_at);
+        if ($createdAt->addHour()->isPast()) {
+            DB::table('password_reset_tokens')->where('token', $token)->delete();
+            session()->flash('failed_message', 'Token reset kata sandi telah kedaluwarsa. Silakan ajukan permintaan baru.');
+            return redirect()->route('password.email');
         }
 
         $user = User::where('email', $request->email)->first();
