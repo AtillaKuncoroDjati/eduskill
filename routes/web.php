@@ -13,7 +13,8 @@ use App\Http\Controllers\Admin\KursusController;
 use App\Http\Controllers\Admin\MateriController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\ModuleController;
-
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\System\BackupController;
 use App\Http\Controllers\User\ListKursusController;
 
 /*
@@ -106,6 +107,7 @@ Route::middleware(['auth', 'check.access'])->group(function () {
         Route::post('content/update-order', [ContentController::class, 'updateOrder'])->name('admin.content.updateOrder');
         Route::post('content/update', [ContentController::class, 'update'])->name('admin.content.update');
         Route::post('content/delete', [ContentController::class, 'delete'])->name('admin.content.delete');
+        Route::post('content/upload-image', [ContentController::class, 'uploadImage'])->name('admin.content.uploadImage');
 
         /*
         |--------------------------------------------------------------------------
@@ -124,6 +126,21 @@ Route::middleware(['auth', 'check.access'])->group(function () {
 
         Route::get('{kursus}/peserta', [KursusController::class, 'peserta'])->name('admin.kursus.peserta');
         Route::post('{kursus}/peserta/request', [KursusController::class, 'pesertaRequest'])->name('admin.kursus.peserta.request');
+    });
+
+    Route::prefix('admin/pengguna')->middleware('access:admin')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('admin.user.index');
+        Route::post('request', [UserController::class, 'request'])->name('admin.user.request');
+        Route::get('{id}/detail', [UserController::class, 'detail'])->name('admin.user.detail');
+        Route::post('store', [UserController::class, 'store'])->name('admin.user.store');
+        Route::post('update', [UserController::class, 'update'])->name('admin.user.update');
+        Route::post('delete', [UserController::class, 'delete'])->name('admin.user.delete');
+        Route::post('toggle-status', [UserController::class, 'toggleStatus'])->name('admin.user.toggleStatus');
+    });
+
+    Route::prefix('system/backup')->middleware('access:admin')->group(function () {
+        Route::get('/', [BackupController::class, 'index'])->name('system.backup.index');
+        Route::get('/download', [BackupController::class, 'download'])->name('system.backup.download');
     });
 
     Route::prefix('user/daftar-kursus')->group(function () {

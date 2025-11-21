@@ -1,4 +1,3 @@
-{{-- resources/views/user/kursus/index.blade.php --}}
 @extends('template', ['title' => 'Daftar Kursus'])
 
 @section('content')

@@ -64,7 +64,7 @@
                 </li>
 
                 <li class="side-nav-item">
-                    <a href="#" class="side-nav-link">
+                    <a href="{{ route('admin.user.index') }}" class="side-nav-link">
                         <span class="menu-icon"><i class="ti ti-users"></i></span>
                         <span class="menu-text"> Pengguna </span>
                     </a>
@@ -72,7 +72,23 @@
             @endif
 
             <!-- 3. System Utilities -->
-            <li class="side-nav-title mt-2">Sistem</li>
+            <li class="side-nav-title mt-2">Sistem & Utilitas</li>
+
+            @if (auth()->user()->permission === 'admin')
+                <li class="side-nav-item">
+                    <a href="{{ route('system.backup.index') }}" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-database"></i></span>
+                        <span class="menu-text"> Backup Database </span>
+                    </a>
+                </li>
+            @endif
+
+            <li class="side-nav-item">
+                <a href="#" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-book-2"></i></span>
+                    <span class="menu-text"> Panduan Sistem </span>
+                </a>
+            </li>
 
             <li class="side-nav-item">
                 <a href="{{ route('clear.cache') }}" class="side-nav-link">
