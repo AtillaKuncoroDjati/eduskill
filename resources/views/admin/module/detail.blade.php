@@ -145,7 +145,7 @@
 
                         <div class="mb-3" id="create-content-label">
                             <label class="form-label" id="create-content-label-text">Konten</label>
-                            <div id="create-content-editor" style="height: 300px;"></div>
+                            <div id="create-content-editor" style="height: 150px;"></div>
                         </div>
 
                         <div id="create-quiz-builder" class="d-none">
@@ -300,36 +300,6 @@
             }
         }
 
-        // Initialize on page load
-        $(document).ready(function() {
-            // Drag & Drop Materi dengan visual feedback
-            const drake = dragula([document.getElementById("materi-list")], {
-                moves: function(el, container, handle) {
-                    // Only allow drag from drag-handle
-                    return handle.classList.contains('drag-handle') ||
-                        handle.closest('.drag-handle') !== null;
-                }
-            });
-
-            drake.on('drop', function() {
-                let orders = {};
-                $("#materi-list .card").each(function(index) {
-                    orders[index] = $(this).data("id");
-
-                    // Update number badge
-                    $(this).find('.badge.rounded-circle').text(index + 1);
-                });
-
-                $.post("{{ route('admin.content.updateOrder') }}", {
-                    _token: "{{ csrf_token() }}",
-                    orders: orders
-                }).done(function() {
-                    // Optional: Show success toast
-                    console.log('Order updated successfully');
-                });
-            });
-        });
-
         let createQuill, editQuill;
         let createQIndex = 0;
         let editQIndex = 0;
@@ -408,6 +378,13 @@
             });
         }
 
+        // Function to adjust editor height based on content type
+        function adjustEditorHeight(type, isEditModal = false) {
+            const editorSelector = isEditModal ? '#edit-content-editor' : '#create-content-editor';
+            const height = type === 'quiz' ? '150px' : '300px';
+            $(editorSelector).css('height', height);
+        }
+
         // Function to handle image upload
         function selectLocalImage(quill) {
             const input = document.createElement('input');
@@ -460,18 +437,33 @@
 
         // Initialize on page load
         $(document).ready(function() {
-            dragula([document.getElementById("materi-list")]).on('drop', function() {
+            const drake = dragula([document.getElementById("materi-list")], {
+                moves: function(el, container, handle) {
+                    return handle.classList.contains('drag-handle') ||
+                        handle.closest('.drag-handle') !== null;
+                }
+            });
+
+            drake.on('drop', function() {
                 let orders = {};
                 $("#materi-list .card").each(function(index) {
                     orders[index] = $(this).data("id");
+
+                    // Update number badge
+                    $(this).find('.badge.rounded-circle').text(index + 1);
                 });
 
                 $.post("{{ route('admin.content.updateOrder') }}", {
                     _token: "{{ csrf_token() }}",
                     orders: orders
+                }).done(function() {
+                    // Optional: Show success toast
+                    console.log('Order updated successfully');
                 });
             });
         });
+
+        // ==================== CREATE MODAL ====================
 
         // Create Modal Events
         $('#create-material-modal').on('shown.bs.modal', function() {
@@ -487,47 +479,265 @@
         });
 
         $('#create-type').on('change', function() {
-            if ($(this).val() === 'quiz') {
+            const type = $(this).val();
+            if (type === 'quiz') {
                 $('#create-quiz-builder').removeClass('d-none');
                 $('#create-content-label-text').text('Deskripsi / Petunjuk Kuis');
             } else {
                 $('#create-quiz-builder').addClass('d-none');
                 $('#create-content-label-text').text('Konten');
             }
+            adjustEditorHeight(type, false);
         });
 
         $('#create-add-question').on('click', function() {
-            // Hitung jumlah pertanyaan yang ada saat ini
             const currentQuestionCount = $('#create-questions-container .question-block').length;
 
             const qHtml = `
-        <div class="card mb-3 question-block" data-index="${currentQuestionCount}">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <strong>Pertanyaan ${currentQuestionCount + 1}</strong>
-                <button type="button" class="btn btn-sm btn-danger remove-question">
-                    <i class="ti ti-trash"></i> Hapus
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Pertanyaan</label>
-                    <input type="text" name="questions[${currentQuestionCount}][text]" class="form-control" placeholder="Masukkan pertanyaan" required>
+            <div class="card mb-3 question-block" data-index="${currentQuestionCount}">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <strong>Pertanyaan ${currentQuestionCount + 1}</strong>
+                    <button type="button" class="btn btn-sm btn-danger remove-question">
+                        <i class="ti ti-trash"></i> Hapus
+                    </button>
                 </div>
-                <div class="mb-2">
-                    <label class="form-label">Jawaban (centang untuk jawaban benar)</label>
-                    <div class="options-container"></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Pertanyaan</label>
+                        <input type="text" name="questions[${currentQuestionCount}][text]" class="form-control" placeholder="Masukkan pertanyaan" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Jawaban (centang untuk jawaban benar)</label>
+                        <div class="options-container"></div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-soft-secondary add-create-option" data-q="${currentQuestionCount}">
+                        <i class="ti ti-plus"></i> Tambah Jawaban
+                    </button>
                 </div>
-                <button type="button" class="btn btn-sm btn-soft-secondary add-option" data-q="${currentQuestionCount}">
-                    <i class="ti ti-plus"></i> Tambah Jawaban
-                </button>
             </div>
-        </div>
-    `;
+        `;
             $('#create-questions-container').append(qHtml);
         });
 
+        // Event untuk ADD OPTION di CREATE MODAL
+        $(document).on('click', '.add-create-option', function() {
+            let q = $(this).data('q');
+            let optionCount = $(`.question-block[data-index="${q}"] .option-block`).length;
+
+            const optHtml = `
+            <div class="input-group mb-2 option-block">
+                <span class="input-group-text">
+                    <input type="checkbox" name="questions[${q}][options][${optionCount}][is_correct]" class="form-check-input mt-0">
+                </span>
+                <input type="text" class="form-control"
+                    name="questions[${q}][options][${optionCount}][text]"
+                    placeholder="Isi jawaban" required>
+                <button type="button" class="btn btn-soft-danger remove-option">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+        `;
+            $(`.question-block[data-index="${q}"] .options-container`).append(optHtml);
+        });
+
+        // Submit Create Form
+        $('#form-create-material').on('submit', function(e) {
+            const content = createQuill.root.innerHTML;
+            $('#create-content-hidden').val(content);
+
+            const type = $('#create-type').val();
+            if (type === 'quiz') {
+                const questionCount = $('#create-questions-container .question-block').length;
+                if (questionCount === 0) {
+                    e.preventDefault();
+                    Swal.fire('Error', 'Quiz harus memiliki minimal 1 pertanyaan', 'error');
+                    return false;
+                }
+            }
+        });
+
+        // ==================== EDIT MODAL ====================
+
+        // Edit Modal Events
+        $('.btn-edit-material').on('click', function() {
+            const id = $(this).data('id');
+            const title = $(this).data('title');
+            const type = $(this).data('type');
+
+            $('#edit-id').val(id);
+            $('#edit-title').val(title);
+            $('#edit-type').val(type);
+
+            // PENTING: Reset container dan index
+            $('#edit-questions-container').html('');
+            editQIndex = 0; // RESET INDEX!
+
+            // Update label berdasarkan type
+            if (type === 'quiz') {
+                $('#edit-content-label-text').text('Deskripsi / Petunjuk Kuis');
+                $('#edit-quiz-builder').removeClass('d-none');
+            } else {
+                $('#edit-content-label-text').text('Konten');
+                $('#edit-quiz-builder').addClass('d-none');
+            }
+
+            // Adjust editor height
+            adjustEditorHeight(type, true);
+
+            // Load content via AJAX
+            $.get("{{ url('admin/kursus/content') }}/" + id + "/quiz-data", function(res) {
+                if (!editQuill) {
+                    initializeEditQuill();
+                }
+
+                setTimeout(() => {
+                    editQuill.root.innerHTML = res.content || '';
+
+                    if (type === 'quiz') {
+                        res.questions.forEach((q, i) => {
+                            let qHtml = `
+                            <div class="card mb-3 edit-question-block" data-index="${i}">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <strong>Pertanyaan ${i + 1}</strong>
+                                    <button type="button" class="btn btn-sm btn-danger remove-question">
+                                        <i class="ti ti-trash"></i> Hapus
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Pertanyaan</label>
+                                        <input type="text" name="questions[${i}][text]" value="${q.question}"
+                                            class="form-control" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Jawaban (centang untuk jawaban benar)</label>
+                                        <div class="edit-options-container">
+                        `;
+
+                            q.options.forEach((opt, oi) => {
+                                qHtml += `
+                                <div class="input-group mb-2 option-block">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" name="questions[${i}][options][${oi}][is_correct]"
+                                            class="form-check-input mt-0" ${opt.is_correct ? 'checked' : ''}>
+                                    </span>
+                                    <input type="text" name="questions[${i}][options][${oi}][text]"
+                                        value="${opt.option_text}" class="form-control" required>
+                                    <button type="button" class="btn btn-outline-danger remove-option">
+                                        <i class="ti ti-x"></i>
+                                    </button>
+                                </div>
+                            `;
+                            });
+
+                            qHtml += `
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-soft-secondary add-edit-option" data-q="${i}">
+                                        <i class="ti ti-plus"></i> Tambah Jawaban
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+
+                            $('#edit-questions-container').append(qHtml);
+                        });
+
+                        // Set editQIndex setelah semua pertanyaan dimuat
+                        editQIndex = res.questions.length;
+                    }
+
+                    $('#edit-material-modal').modal('show');
+                }, 100);
+            });
+        });
+
+        $('#edit-type').on('change', function() {
+            if ($(this).val() === 'quiz') {
+                $('#edit-quiz-builder').removeClass('d-none');
+                $('#edit-content-label-text').text('Deskripsi / Petunjuk Kuis');
+            } else {
+                $('#edit-quiz-builder').addClass('d-none');
+                $('#edit-content-label-text').text('Konten');
+            }
+        });
+
+        $('#edit-add-question').on('click', function() {
+            const currentQuestionCount = $('#edit-questions-container .edit-question-block').length;
+
+            const qHtml = `
+            <div class="card mb-3 edit-question-block" data-index="${currentQuestionCount}">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <strong>Pertanyaan ${currentQuestionCount + 1}</strong>
+                    <button type="button" class="btn btn-sm btn-danger remove-question">
+                        <i class="ti ti-trash"></i> Hapus
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Pertanyaan</label>
+                        <input type="text" name="questions[${currentQuestionCount}][text]" class="form-control" placeholder="Masukkan pertanyaan" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Jawaban (centang untuk jawaban benar)</label>
+                        <div class="edit-options-container"></div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-soft-secondary add-edit-option" data-q="${currentQuestionCount}">
+                        <i class="ti ti-plus"></i> Tambah Jawaban
+                    </button>
+                </div>
+            </div>
+        `;
+            $('#edit-questions-container').append(qHtml);
+        });
+
+        // Event untuk ADD OPTION di EDIT MODAL
+        $(document).on('click', '.add-edit-option', function() {
+            let q = $(this).data('q');
+            let optionCount = $(`.edit-question-block[data-index="${q}"] .option-block`).length;
+
+            const optHtml = `
+            <div class="input-group mb-2 option-block">
+                <span class="input-group-text">
+                    <input type="checkbox" name="questions[${q}][options][${optionCount}][is_correct]" class="form-check-input mt-0">
+                </span>
+                <input type="text" class="form-control"
+                    name="questions[${q}][options][${optionCount}][text]"
+                    placeholder="Isi jawaban" required>
+                <button type="button" class="btn btn-soft-danger remove-option">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+        `;
+            $(`.edit-question-block[data-index="${q}"] .edit-options-container`).append(optHtml);
+        });
+
+        // Submit Edit Form
+        $('#form-edit-material').on('submit', function(e) {
+            const content = editQuill.root.innerHTML;
+            $('#edit-content-hidden').val(content);
+
+            const type = $('#edit-type').val();
+            if (type === 'quiz') {
+                const questionCount = $('#edit-questions-container .edit-question-block').length;
+                if (questionCount === 0) {
+                    e.preventDefault();
+                    Swal.fire('Error', 'Quiz harus memiliki minimal 1 pertanyaan', 'error');
+                    return false;
+                }
+            }
+        });
+
+        // ==================== SHARED EVENTS ====================
+
+        // Remove option
+        $(document).on('click', '.remove-option', function() {
+            $(this).closest('.option-block').remove();
+        });
+
+        // Remove question dengan re-indexing
         $(document).on('click', '.remove-question', function() {
-            const questionBlock = $(this).closest('.question-block');
+            const questionBlock = $(this).closest('.question-block, .edit-question-block');
             const container = questionBlock.parent();
 
             Swal.fire({
@@ -564,247 +774,10 @@
                         });
 
                         // Update data-q pada button add-option
-                        $(this).find('.add-option').attr('data-q', index);
+                        $(this).find('.add-create-option, .add-edit-option').attr('data-q', index);
                     });
                 }
             });
-        });
-
-        // Sama untuk edit-add-question
-        $('#edit-add-question').on('click', function() {
-            const currentQuestionCount = $('#edit-questions-container .edit-question-block').length;
-
-            const qHtml = `
-        <div class="card mb-3 edit-question-block" data-index="${currentQuestionCount}">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <strong>Pertanyaan ${currentQuestionCount + 1}</strong>
-                <button type="button" class="btn btn-sm btn-danger remove-question">
-                    <i class="ti ti-trash"></i> Hapus
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Pertanyaan</label>
-                    <input type="text" name="questions[${currentQuestionCount}][text]" class="form-control" placeholder="Masukkan pertanyaan" required>
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Jawaban (centang untuk jawaban benar)</label>
-                    <div class="edit-options-container"></div>
-                </div>
-                <button type="button" class="btn btn-sm btn-soft-secondary add-option" data-q="${currentQuestionCount}">
-                    <i class="ti ti-plus"></i> Tambah Jawaban
-                </button>
-            </div>
-        </div>
-    `;
-            $('#edit-questions-container').append(qHtml);
-        });
-
-        $(document).on('click', '.add-option', function() {
-            let q = $(this).data('q');
-            let optionCount = $(`.question-block[data-index="${q}"] .option-block`).length;
-
-            const optHtml = `
-                <div class="input-group mb-2 option-block">
-                    <span class="input-group-text">
-                        <input type="checkbox" name="questions[${q}][options][${optionCount}][is_correct]" class="form-check-input mt-0">
-                    </span>
-                    <input type="text" class="form-control"
-                        name="questions[${q}][options][${optionCount}][text]"
-                        placeholder="Isi jawaban" required>
-                    <button type="button" class="btn btn-soft-danger remove-option">
-                        <i class="ti ti-x"></i>
-                    </button>
-                </div>
-            `;
-            $(`.question-block[data-index="${q}"] .options-container`).append(optHtml);
-        });
-
-        $(document).on('click', '.remove-option', function() {
-            $(this).closest('.option-block').remove();
-        });
-
-        $(document).on('click', '.remove-question', function() {
-            const questionBlock = $(this).closest('.question-block');
-            const questionNumber = questionBlock.index() + 1;
-
-            Swal.fire({
-                title: 'Konfirmasi',
-                text: `Hapus Pertanyaan ${questionNumber}?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    questionBlock.remove();
-                    // Re-number questions
-                    $('#create-questions-container .question-block').each(function(index) {
-                        $(this).find('.card-header strong').text('Pertanyaan ' + (index + 1));
-                    });
-                }
-            });
-        });
-
-        // Submit Create Form
-        $('#form-create-material').on('submit', function(e) {
-            const content = createQuill.root.innerHTML;
-            $('#create-content-hidden').val(content);
-
-            const type = $('#create-type').val();
-            if (type === 'quiz') {
-                const questionCount = $('#create-questions-container .question-block').length;
-                if (questionCount === 0) {
-                    e.preventDefault();
-                    Swal.fire('Error', 'Quiz harus memiliki minimal 1 pertanyaan', 'error');
-                    return false;
-                }
-            }
-        });
-
-        // Edit Modal Events
-        $('.btn-edit-material').on('click', function() {
-            const id = $(this).data('id');
-            const title = $(this).data('title');
-            const type = $(this).data('type');
-
-            $('#edit-id').val(id);
-            $('#edit-title').val(title);
-            $('#edit-type').val(type);
-
-            $('#edit-questions-container').html('');
-
-            // Update label berdasarkan type
-            if (type === 'quiz') {
-                $('#edit-content-label-text').text('Deskripsi / Petunjuk Kuis');
-                $('#edit-quiz-builder').removeClass('d-none');
-            } else {
-                $('#edit-content-label-text').text('Konten');
-                $('#edit-quiz-builder').addClass('d-none');
-            }
-
-            // Load content via AJAX
-            $.get("{{ url('admin/kursus/content') }}/" + id + "/quiz-data", function(res) {
-                if (!editQuill) {
-                    initializeEditQuill();
-                }
-
-                setTimeout(() => {
-                    editQuill.root.innerHTML = res.content || '';
-
-                    if (type === 'quiz') {
-                        editQIndex = 0;
-
-                        res.questions.forEach((q, i) => {
-                            let qHtml = `
-                                <div class="card mb-3 edit-question-block" data-index="${i}">
-                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                        <strong>Pertanyaan ${i + 1}</strong>
-                                        <button type="button" class="btn btn-sm btn-danger remove-question">
-                                            <i class="ti ti-trash"></i> Hapus
-                                        </button>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="mb-3">
-                                            <label class="form-label">Pertanyaan</label>
-                                            <input type="text" name="questions[${i}][text]" value="${q.question}"
-                                                class="form-control" required>
-                                        </div>
-                                        <div class="mb-2">
-                                            <label class="form-label">Jawaban (centang untuk jawaban benar)</label>
-                                            <div class="edit-options-container">
-                            `;
-
-                            q.options.forEach((opt, oi) => {
-                                qHtml += `
-                                    <div class="input-group mb-2 option-block">
-                                        <span class="input-group-text">
-                                            <input type="checkbox" name="questions[${i}][options][${oi}][is_correct]"
-                                                class="form-check-input mt-0" ${opt.is_correct ? 'checked' : ''}>
-                                        </span>
-                                        <input type="text" name="questions[${i}][options][${oi}][text]"
-                                            value="${opt.option_text}" class="form-control" required>
-                                        <button type="button" class="btn btn-outline-danger remove-option">
-                                            <i class="ti ti-x"></i>
-                                        </button>
-                                    </div>
-                                `;
-                            });
-
-                            qHtml += `
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn btn-sm btn-soft-secondary add-option" data-q="${i}">
-                                            <i class="ti ti-plus"></i> Tambah Jawaban
-                                        </button>
-                                    </div>
-                                </div>
-                            `;
-
-                            $('#edit-questions-container').append(qHtml);
-                            editQIndex = i + 1;
-                        });
-                    }
-
-                    $('#edit-material-modal').modal('show');
-                }, 100);
-            });
-        });
-
-        $('#edit-type').on('change', function() {
-            if ($(this).val() === 'quiz') {
-                $('#edit-quiz-builder').removeClass('d-none');
-                $('#edit-content-label-text').text('Deskripsi / Petunjuk Kuis');
-            } else {
-                $('#edit-quiz-builder').addClass('d-none');
-                $('#edit-content-label-text').text('Konten');
-            }
-        });
-
-        $('#edit-add-question').on('click', function() {
-            const qHtml = `
-                <div class="card mb-3 edit-question-block" data-index="${editQIndex}">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <strong>Pertanyaan ${editQIndex + 1}</strong>
-                        <button type="button" class="btn btn-sm btn-danger remove-question">
-                            <i class="ti ti-trash"></i> Hapus
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Pertanyaan</label>
-                            <input type="text" name="questions[${editQIndex}][text]" class="form-control" placeholder="Masukkan pertanyaan" required>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">Jawaban (centang untuk jawaban benar)</label>
-                            <div class="edit-options-container"></div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-soft-secondary add-option" data-q="${editQIndex}">
-                            <i class="ti ti-plus"></i> Tambah Jawaban
-                        </button>
-                    </div>
-                </div>
-            `;
-            $('#edit-questions-container').append(qHtml);
-            editQIndex++;
-        });
-
-        // Submit Edit Form
-        $('#form-edit-material').on('submit', function(e) {
-            const content = editQuill.root.innerHTML;
-            $('#edit-content-hidden').val(content);
-
-            const type = $('#edit-type').val();
-            if (type === 'quiz') {
-                const questionCount = $('#edit-questions-container .edit-question-block').length;
-                if (questionCount === 0) {
-                    e.preventDefault();
-                    Swal.fire('Error', 'Quiz harus memiliki minimal 1 pertanyaan', 'error');
-                    return false;
-                }
-            }
         });
     </script>
 @endpush
