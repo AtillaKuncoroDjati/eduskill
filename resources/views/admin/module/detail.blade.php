@@ -615,14 +615,19 @@
                         `;
 
                             q.options.forEach((opt, oi) => {
+                                // Convert to boolean to handle string "1" or "0" from backend
+                                const isChecked = (opt.is_correct == 1 || opt
+                                    .is_correct === true || opt.is_correct ===
+                                    'true');
+
                                 qHtml += `
                                 <div class="input-group mb-2 option-block">
                                     <span class="input-group-text">
                                         <input type="checkbox" name="questions[${i}][options][${oi}][is_correct]"
-                                            class="form-check-input mt-0" ${opt.is_correct ? 'checked' : ''}>
+                                            class="form-check-input mt-0" ${isChecked ? 'checked' : ''}>
                                     </span>
                                     <input type="text" name="questions[${i}][options][${oi}][text]"
-                                        value="${opt.option_text}" class="form-control" required>
+                                        value="${opt.option_text.replace(/"/g, '&quot;')}" class="form-control" required>
                                     <button type="button" class="btn btn-outline-danger remove-option">
                                         <i class="ti ti-x"></i>
                                     </button>
@@ -653,13 +658,15 @@
         });
 
         $('#edit-type').on('change', function() {
-            if ($(this).val() === 'quiz') {
+            const type = $(this).val();
+            if (type === 'quiz') {
                 $('#edit-quiz-builder').removeClass('d-none');
                 $('#edit-content-label-text').text('Deskripsi / Petunjuk Kuis');
             } else {
                 $('#edit-quiz-builder').addClass('d-none');
                 $('#edit-content-label-text').text('Konten');
             }
+            adjustEditorHeight(type, true);
         });
 
         $('#edit-add-question').on('click', function() {
