@@ -117,7 +117,7 @@
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            <img src="https://raw.githubusercontent.com/muhamdaily/assets/refs/heads/main/kembangin.png"
+            <img src="https://raw.githubusercontent.com/JustCarsa/eduskill/refs/heads/main/cdn/logo/logo.png"
                 alt="{{ config('app.name') }} Logo" class="email-logo">
             <h2>Kode Verifikasi OTP</h2>
         </div>
