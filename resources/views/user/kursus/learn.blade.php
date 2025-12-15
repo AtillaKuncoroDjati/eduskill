@@ -145,6 +145,38 @@
         </div>
 
         <div class="col-12 col-lg-9">
+            @if ($userCourse->status === 'completed' && $kursus->certificate)
+                <div class="alert alert-success shadow-sm mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <i class="ti ti-trophy" style="font-size: 48px;"></i>
+                        </div>
+                        <div class="col">
+                            <h5 class="alert-heading mb-2">
+                                <i class="ti ti-confetti"></i> Selamat! Kursus Telah Selesai
+                            </h5>
+                            <p class="mb-3">
+                                Anda telah berhasil menyelesaikan kursus <strong>{{ $kursus->title }}</strong>
+                                pada tanggal {{ $userCourse->completed_at->locale('id')->translatedFormat('d F Y') }}.
+                            </p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="{{ route('user.certificate.preview', $userCourse->id) }}"
+                                    class="btn btn-success">
+                                    <i class="ti ti-eye me-1"></i>Preview Sertifikat
+                                </a>
+                                <a href="{{ route('user.certificate.download', $userCourse->id) }}"
+                                    class="btn btn-primary">
+                                    <i class="ti ti-download me-1"></i>Download Sertifikat
+                                </a>
+                                <a href="{{ route('user.kursus.index') }}" class="btn btn-soft-secondary">
+                                    <i class="ti ti-book me-1"></i>Jelajahi Kursus Lain
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="p-4" id="content-area" style="height: calc(100vh - 70px); overflow-y: auto;">
                 <div id="welcome-screen">
                     <div class="text-center py-5">
@@ -263,7 +295,9 @@
             $('#welcome-screen').hide();
             $('#content-display').show();
 
-            $('#content-display').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Memuat konten...</p></div>');
+            $('#content-display').html(
+                '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Memuat konten...</p></div>'
+            );
 
             $.ajax({
                 url: '/user/daftar-kursus/{{ $kursus->id }}/content/' + contentId,
@@ -276,7 +310,9 @@
                     }
                 },
                 error: function() {
-                    $('#content-display').html('<div class="alert alert-danger"><i class="ti ti-alert-circle"></i> Gagal memuat konten</div>');
+                    $('#content-display').html(
+                        '<div class="alert alert-danger"><i class="ti ti-alert-circle"></i> Gagal memuat konten</div>'
+                    );
                 }
             });
         }
@@ -288,8 +324,10 @@
             html += data.content || '<p class="text-muted">Tidak ada konten</p>';
             html += '</div></div></div>';
             html += '<div class="d-flex justify-content-between mt-4">';
-            html += '<button class="btn btn-outline-secondary" onclick="previousContent()"><i class="ti ti-arrow-left"></i> Sebelumnya</button>';
-            html += '<button class="btn btn-primary" onclick="nextContent()">Selanjutnya <i class="ti ti-arrow-right"></i></button>';
+            html +=
+                '<button class="btn btn-outline-secondary" onclick="previousContent()"><i class="ti ti-arrow-left"></i> Sebelumnya</button>';
+            html +=
+                '<button class="btn btn-primary" onclick="nextContent()">Selanjutnya <i class="ti ti-arrow-right"></i></button>';
             html += '</div></div>';
 
             $('#content-display').html(html);
@@ -303,17 +341,21 @@
 
             let html = '<div class="quiz-wrapper">';
             html += '<h3 class="mb-4">' + escapeHtml(data.title || 'Quiz') + '</h3>';
-            html += '<div class="alert alert-info"><i class="ti ti-info-circle"></i> Quiz ini terdiri dari ' + data.questions.length + ' pertanyaan. Minimal nilai 70% untuk lulus.</div>';
+            html += '<div class="alert alert-info"><i class="ti ti-info-circle"></i> Quiz ini terdiri dari ' + data
+                .questions.length + ' pertanyaan. Minimal nilai 70% untuk lulus.</div>';
             html += '<form id="quiz-form" onsubmit="submitQuiz(event, \'' + data.id + '\')">';
 
             data.questions.forEach(function(question, index) {
                 html += '<div class="card mb-3"><div class="card-body">';
-                html += '<h6 class="mb-3"><span class="badge bg-primary me-2">' + (index + 1) + '</span>' + escapeHtml(question.question) + '</h6>';
+                html += '<h6 class="mb-3"><span class="badge bg-primary me-2">' + (index + 1) + '</span>' +
+                    escapeHtml(question.question) + '</h6>';
 
                 question.options.forEach(function(option) {
                     html += '<div class="form-check mb-2">';
-                    html += '<input class="form-check-input" type="radio" name="question_' + question.id + '" id="option_' + option.id + '" value="' + option.id + '" required>';
-                    html += '<label class="form-check-label" for="option_' + option.id + '">' + escapeHtml(option.option_text) + '</label>';
+                    html += '<input class="form-check-input" type="radio" name="question_' + question.id +
+                        '" id="option_' + option.id + '" value="' + option.id + '" required>';
+                    html += '<label class="form-check-label" for="option_' + option.id + '">' + escapeHtml(
+                        option.option_text) + '</label>';
                     html += '</div>';
                 });
 
@@ -321,7 +363,8 @@
             });
 
             html += '<div class="d-flex justify-content-between mt-4">';
-            html += '<button type="button" class="btn btn-outline-secondary" onclick="previousContent()"><i class="ti ti-arrow-left"></i> Sebelumnya</button>';
+            html +=
+                '<button type="button" class="btn btn-outline-secondary" onclick="previousContent()"><i class="ti ti-arrow-left"></i> Sebelumnya</button>';
             html += '<button type="submit" class="btn btn-success"><i class="ti ti-send"></i> Submit Jawaban</button>';
             html += '</div></form></div>';
 
@@ -368,8 +411,11 @@
                 const borderClass = item.user_is_correct ? 'border-success' : 'border-danger';
                 html += '<div class="card mb-3 ' + borderClass + '"><div class="card-body">';
                 html += '<div class="d-flex justify-content-between align-items-start mb-3">';
-                html += '<h6 class="mb-0"><span class="badge bg-primary me-2">' + (index + 1) + '</span>' + escapeHtml(item.question) + '</h6>';
-                html += item.user_is_correct ? '<span class="badge bg-success"><i class="ti ti-check"></i> Benar</span>' : '<span class="badge bg-danger"><i class="ti ti-x"></i> Salah</span>';
+                html += '<h6 class="mb-0"><span class="badge bg-primary me-2">' + (index + 1) + '</span>' +
+                    escapeHtml(item.question) + '</h6>';
+                html += item.user_is_correct ?
+                    '<span class="badge bg-success"><i class="ti ti-check"></i> Benar</span>' :
+                    '<span class="badge bg-danger"><i class="ti ti-x"></i> Salah</span>';
                 html += '</div>';
 
                 item.options.forEach(function(option) {
@@ -387,15 +433,18 @@
                         badge = '<span class="badge bg-danger ms-2">Jawaban Anda</span>';
                     }
 
-                    html += '<div class="' + classes + '">' + icon + escapeHtml(option.option_text) + badge + '</div>';
+                    html += '<div class="' + classes + '">' + icon + escapeHtml(option.option_text) +
+                        badge + '</div>';
                 });
 
                 html += '</div></div>';
             });
 
             html += '<div class="d-flex justify-content-between mt-4">';
-            html += '<button class="btn btn-outline-secondary" onclick="previousContent()"><i class="ti ti-arrow-left"></i> Sebelumnya</button>';
-            html += '<button class="btn btn-primary" onclick="nextContent()">Selanjutnya <i class="ti ti-arrow-right"></i></button>';
+            html +=
+                '<button class="btn btn-outline-secondary" onclick="previousContent()"><i class="ti ti-arrow-left"></i> Sebelumnya</button>';
+            html +=
+                '<button class="btn btn-primary" onclick="nextContent()">Selanjutnya <i class="ti ti-arrow-right"></i></button>';
             html += '</div></div>';
 
             $('#content-display').html(html);
@@ -410,10 +459,12 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        $('[data-content-id="' + contentId + '"] i').removeClass().addClass('ti ti-circle-check text-success fs-5');
+                        $('[data-content-id="' + contentId + '"] i').removeClass().addClass(
+                            'ti ti-circle-check text-success fs-5');
                         if (response.progress) {
                             $('.progress-bar').css('width', response.progress + '%');
-                            $('.progress-bar').parent().siblings('small').text('Progress: ' + response.progress + '%');
+                            $('.progress-bar').parent().siblings('small').text('Progress: ' + response
+                                .progress + '%');
                         }
                     }
                 }
@@ -453,25 +504,40 @@
 
         function showQuizResult(result) {
             let html = '<div class="text-center py-5">';
-            html += result.is_passed ? '<i class="ti ti-circle-check text-success" style="font-size: 80px;"></i>' : '<i class="ti ti-circle-x text-danger" style="font-size: 80px;"></i>';
+            html += result.is_passed ? '<i class="ti ti-circle-check text-success" style="font-size: 80px;"></i>' :
+                '<i class="ti ti-circle-x text-danger" style="font-size: 80px;"></i>';
             html += '<h3 class="mt-4 mb-3">' + (result.is_passed ? 'Quiz Selesai! 🎉' : 'Belum Lulus') + '</h3>';
-            html += !result.is_passed ? '<p class="text-muted">Nilai minimal untuk lulus adalah 70%. Silakan coba lagi.</p>' : '<p class="text-muted">Selamat! Anda telah menyelesaikan quiz ini.</p>';
+            html += !result.is_passed ?
+                '<p class="text-muted">Nilai minimal untuk lulus adalah 70%. Silakan coba lagi.</p>' :
+                '<p class="text-muted">Selamat! Anda telah menyelesaikan quiz ini.</p>';
 
             html += '<div class="row g-3 mt-4 justify-content-center">';
-            html += '<div class="col-md-3"><div class="card border"><div class="card-body text-center"><h4 class="mb-0 text-primary">' + result.score + '%</h4><small class="text-muted">Nilai</small></div></div></div>';
-            html += '<div class="col-md-3"><div class="card border"><div class="card-body text-center"><h4 class="mb-0 text-success">' + result.correct_answers + '</h4><small class="text-muted">Benar</small></div></div></div>';
-            html += '<div class="col-md-3"><div class="card border"><div class="card-body text-center"><h4 class="mb-0 text-danger">' + (result.total_questions - result.correct_answers) + '</h4><small class="text-muted">Salah</small></div></div></div>';
-            html += '<div class="col-md-3"><div class="card border"><div class="card-body text-center"><h4 class="mb-0 text-info">' + result.total_questions + '</h4><small class="text-muted">Total Soal</small></div></div></div>';
+            html +=
+                '<div class="col-md-3"><div class="card border"><div class="card-body text-center"><h4 class="mb-0 text-primary">' +
+                result.score + '%</h4><small class="text-muted">Nilai</small></div></div></div>';
+            html +=
+                '<div class="col-md-3"><div class="card border"><div class="card-body text-center"><h4 class="mb-0 text-success">' +
+                result.correct_answers + '</h4><small class="text-muted">Benar</small></div></div></div>';
+            html +=
+                '<div class="col-md-3"><div class="card border"><div class="card-body text-center"><h4 class="mb-0 text-danger">' +
+                (result.total_questions - result.correct_answers) +
+                '</h4><small class="text-muted">Salah</small></div></div></div>';
+            html +=
+                '<div class="col-md-3"><div class="card border"><div class="card-body text-center"><h4 class="mb-0 text-info">' +
+                result.total_questions + '</h4><small class="text-muted">Total Soal</small></div></div></div>';
             html += '</div>';
 
             html += '<div class="mt-4">';
-            html += result.is_passed ? '<button class="btn btn-primary btn-lg" onclick="nextContentAfterQuiz()">Lanjut ke Materi Berikutnya <i class="ti ti-arrow-right ms-1"></i></button>' : '<button class="btn btn-warning btn-lg" onclick="loadContent(currentContentId, \'quiz\')"><i class="ti ti-reload me-1"></i> Ulangi Quiz</button>';
+            html += result.is_passed ?
+                '<button class="btn btn-primary btn-lg" onclick="nextContentAfterQuiz()">Lanjut ke Materi Berikutnya <i class="ti ti-arrow-right ms-1"></i></button>' :
+                '<button class="btn btn-warning btn-lg" onclick="loadContent(currentContentId, \'quiz\')"><i class="ti ti-reload me-1"></i> Ulangi Quiz</button>';
             html += '</div></div>';
 
             $('#content-display').html(html);
 
             if (result.is_passed) {
-                $('[data-content-id="' + currentContentId + '"] i').removeClass().addClass('ti ti-circle-check text-success fs-5');
+                $('[data-content-id="' + currentContentId + '"] i').removeClass().addClass(
+                    'ti ti-circle-check text-success fs-5');
                 if (result.progress) {
                     $('.progress-bar').css('width', result.progress + '%');
                     $('.progress-bar').parent().siblings('small').text('Progress: ' + result.progress + '%');
@@ -491,7 +557,8 @@
             if (nextItem.length > 0) return nextItem;
 
             let currentAccordionBody = currentItem.closest('.accordion-body');
-            let nextAccordionBody = currentAccordionBody.closest('.accordion-item').next('.accordion-item').find('.accordion-body');
+            let nextAccordionBody = currentAccordionBody.closest('.accordion-item').next('.accordion-item').find(
+                '.accordion-body');
 
             if (nextAccordionBody.length > 0) {
                 nextItem = nextAccordionBody.find('.content-item').first();
@@ -508,7 +575,8 @@
             if (prevItem.length > 0) return prevItem;
 
             let currentAccordionBody = currentItem.closest('.accordion-body');
-            let prevAccordionBody = currentAccordionBody.closest('.accordion-item').prev('.accordion-item').find('.accordion-body');
+            let prevAccordionBody = currentAccordionBody.closest('.accordion-item').prev('.accordion-item').find(
+                '.accordion-body');
 
             if (prevAccordionBody.length > 0) {
                 prevItem = prevAccordionBody.find('.content-item').last();

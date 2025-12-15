@@ -418,9 +418,16 @@
                                                 <td class="text-center">
                                                     @if ($userCourse->status === 'completed')
                                                         @if ($userCourse->kursus->certificate)
-                                                            <a href="#" class="btn btn-sm btn-success w-100 mb-1">
-                                                                <i class="ti ti-certificate me-1"></i>Sertifikat
-                                                            </a>
+                                                            <div class="d-grid gap-1">
+                                                                <a href="{{ route('user.certificate.preview', $userCourse->id) }}"
+                                                                    class="btn btn-sm btn-success w-100">
+                                                                    <i class="ti ti-certificate me-1"></i>Sertifikat
+                                                                </a>
+                                                                <a href="{{ route('user.certificate.download', $userCourse->id) }}"
+                                                                    class="btn btn-sm btn-primary w-100">
+                                                                    <i class="ti ti-download me-1"></i>Download
+                                                                </a>
+                                                            </div>
                                                         @else
                                                             <span class="text-muted small">Tanpa Sertifikat</span>
                                                         @endif

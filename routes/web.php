@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\System\BackupController;
+use App\Http\Controllers\User\CertificateController;
 use App\Http\Controllers\User\ListKursusController;
 
 /*
@@ -162,5 +163,11 @@ Route::middleware(['auth', 'check.access'])->group(function () {
         Route::get('{kursus}/content/{content}', [ListKursusController::class, 'getContent'])->name('user.kursus.content');
         Route::post('{kursus}/content/{content}/complete', [ListKursusController::class, 'markContentComplete'])->name('user.kursus.content.complete');
         Route::post('{kursus}/quiz/{content}/submit', [ListKursusController::class, 'submitQuiz'])->name('user.kursus.quiz.submit');
+    });
+
+    Route::prefix('user/certificate')->middleware('auth')->group(function () {
+        Route::get('{userCourse}/preview', [CertificateController::class, 'preview'])->name('user.certificate.preview');
+        Route::get('{userCourse}/show', [CertificateController::class, 'show'])->name('user.certificate.show');
+        Route::get('{userCourse}/download', [CertificateController::class, 'download'])->name('user.certificate.download');
     });
 });
