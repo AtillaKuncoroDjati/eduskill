@@ -84,10 +84,17 @@
             @endif
 
             <li class="side-nav-item">
-                <a href="#" class="side-nav-link">
-                    <span class="menu-icon"><i class="ti ti-book-2"></i></span>
-                    <span class="menu-text"> Panduan Sistem </span>
-                </a>
+                @if (auth()->user()->permission === 'admin')
+                    <a href="{{ asset('assets/pdf/manual-book-admin.pdf') }}" target="_blank" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-book-2"></i></span>
+                        <span class="menu-text"> Panduan Sistem </span>
+                    </a>
+                @else
+                    <a href="{{ asset('assets/pdf/manual-book.pdf') }}" target="_blank" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-book-2"></i></span>
+                        <span class="menu-text"> Panduan Sistem </span>
+                    </a>
+                @endif
             </li>
 
             <li class="side-nav-item">
