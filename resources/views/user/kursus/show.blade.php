@@ -229,7 +229,7 @@
 
                     @if ($kursus->modules->isEmpty())
                         @php
-                            $whatsappNumber = '6285711152711';
+                            $whatsappNumber = '6289530695776';
                             $message = "Halo Admin Eduskill,%0A%0ASaya ingin menanyakan tentang kursus *{$kursus->title}*.%0A%0ASaat ini kursus tersebut belum memiliki modul pembelajaran. Apakah modul akan segera ditambahkan?%0A%0AMohon informasinya. Terima kasih.";
                             $whatsappLink = "https://wa.me/{$whatsappNumber}?text={$message}";
                         @endphp

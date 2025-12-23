@@ -23,8 +23,8 @@
             </div>
             <div class="modal-body">
                 <ul class="list-group">
-                    <li class="list-group-item"><b>41522010153</b> - ATILLA KUNCORO DJATI (Backend)</li>
-                    <li class="list-group-item"><b>41522010150</b> - NAUFAL ATHILLAH (Frontend)</li>
+                    <li class="list-group-item"><b>41522010153</b> - ATILLA KUNCORO DJATI (Frontend)</li>
+                    <li class="list-group-item"><b>41522010150</b> - NAUFAL ATHILLAH (Backend)</li>
                     <li class="list-group-item"><b>41522010061</b> - RAFLY PRIATMOJO (UI/UX)</li>
                 </ul>
             </div>
