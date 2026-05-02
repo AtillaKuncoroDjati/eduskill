@@ -316,6 +316,7 @@ class AuthController extends Controller
         session()->regenerateToken();
 
         session()->flash('success_message', 'Sesi telah berakhir, silakan login kembali!');
+        session()->flash('crisp_reset', true);
         return redirect()->route('auth.view');
     }
 }

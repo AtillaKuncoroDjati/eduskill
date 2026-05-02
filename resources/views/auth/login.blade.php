@@ -139,6 +139,33 @@
         <!-- Google reCAPTCHA -->
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     @endif
+
+    @if (\Illuminate\Support\Facades\Session::get('crisp_reset') && config('crisp.enabled') && config('crisp.website_id'))
+        <script>
+            (function () {
+                try {
+                    var crispWebsiteId = @json(config('crisp.website_id'));
+                    Object.keys(localStorage).forEach(function (key) {
+                        if (key.indexOf('crisp-client') === 0) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                    Object.keys(sessionStorage).forEach(function (key) {
+                        if (key.indexOf('crisp-client') === 0) {
+                            sessionStorage.removeItem(key);
+                        }
+                    });
+                    document.cookie.split(';').forEach(function (c) {
+                        var name = c.trim().split('=')[0];
+                        if (name.indexOf('crisp-client') === 0) {
+                            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                        }
+                    });
+                } catch (e) { /* abaikan */ }
+            })();
+        </script>
+    @endif
+
     <!-- Page js -->
     <script>
         function onSubmit(token) {

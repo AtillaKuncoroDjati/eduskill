@@ -10,19 +10,51 @@
     window.$crisp = [];
     window.CRISP_WEBSITE_ID = @json($crispId);
 
-    /* ── Identitas pengguna ── */
-    $crisp.push(["set", "user:email",    [@json($authUser->email)]]);
-    $crisp.push(["set", "user:nickname", [@json($authUser->name)]]);
+    /* ── Tema visual: indigo (sesuai warna primary EduSkill #544AF5) ── */
+    $crisp.push(["config", "color:theme",        ["indigo"]]);
+    $crisp.push(["config", "position:reverse",   [false]]);  /* tetap di kanan */
+    $crisp.push(["config", "container:index",    [9999]]);
+    $crisp.push(["config", "hide:vacation",      [false]]);
+
+    /* ── Identitas pengguna saat ini ── */
+    var crispCurrentEmail    = @json($authUser->email);
+    var crispCurrentName     = @json($authUser->name);
+    var crispCurrentUserId   = @json($authUser->id);
     @if ($authUser->avatar && $authUser->avatar !== 'default-avatar.png')
-    $crisp.push(["set", "user:avatar",   [@json(asset('uploads/avatar/' . $authUser->avatar))]]);
+    var crispCurrentAvatar   = @json(asset('uploads/avatar/' . $authUser->avatar));
+    @else
+    var crispCurrentAvatar   = null;
     @endif
 
-    /* ── Data sesi tambahan (terlihat di dashboard Crisp admin) ── */
-    $crisp.push(["set", "session:data", [[
-        ["user_id",  @json($authUser->id)],
-        ["platform", "EduSkill"],
-        ["role",     "user"]
-    ]]]);
+    function crispApplyIdentity() {
+        $crisp.push(["set", "user:email",    [crispCurrentEmail]]);
+        $crisp.push(["set", "user:nickname", [crispCurrentName]]);
+        if (crispCurrentAvatar) {
+            $crisp.push(["set", "user:avatar", [crispCurrentAvatar]]);
+        }
+        $crisp.push(["set", "session:data", [[
+            ["user_id",  crispCurrentUserId],
+            ["platform", "EduSkill"],
+            ["role",     "user"]
+        ]]]);
+    }
+
+    crispApplyIdentity();
+
+    /* ── Reset session jika user berbeda dari yang sebelumnya login
+     * Mencegah history chat user lama menempel saat berganti akun
+     * di browser yang sama.
+     * ──────────────────────────────────────────────────────────── */
+    $crisp.push(["on", "session:loaded", function () {
+        try {
+            var existingEmail = $crisp.get("user:email");
+            if (existingEmail && existingEmail !== crispCurrentEmail) {
+                $crisp.push(["do", "session:reset"]);
+                /* Set ulang identitas baru setelah reset */
+                setTimeout(crispApplyIdentity, 300);
+            }
+        } catch (e) { /* abaikan jika SDK belum siap */ }
+    }]);
 
     /* ── Template "Tinggalkan Pesan" ───────────────────────────────────
      * Jika chat dibuka dan admin belum membalas dalam 8 detik,
@@ -38,29 +70,24 @@
             "Saya menyadari Anda sedang tidak tersedia saat ini.\n" +
             "Berikut pesan yang ingin saya sampaikan:\n\n" +
             "[Tulis pertanyaan atau pesan Anda di sini]\n\n" +
-            "Nama  : " + @json($authUser->name) + "\n" +
-            "Email : " + @json($authUser->email) + "\n\n" +
+            "Nama  : " + crispCurrentName + "\n" +
+            "Email : " + crispCurrentEmail + "\n\n" +
             "Mohon balas secepatnya. Terima kasih! 🙏";
 
-        /* Batalkan timer jika admin membalas */
         $crisp.push(["on", "message:received", function () {
             operatorHasReplied = true;
             if (leaveTimer) clearTimeout(leaveTimer);
         }]);
 
-        /* Mulai timer ketika chat dibuka */
         $crisp.push(["on", "chat:opened", function () {
             if (operatorHasReplied) return;
-
             leaveTimer = setTimeout(function () {
-                /* Hanya isi template jika kolom input masih kosong */
                 if ($crisp.get("message:text") === "") {
                     $crisp.push(["set", "message:text", [LEAVE_MSG_TEMPLATE]]);
                 }
-            }, 8000); /* 8 detik setelah chat dibuka */
+            }, 8000);
         }]);
 
-        /* Bersihkan timer ketika chat ditutup */
         $crisp.push(["on", "chat:closed", function () {
             if (leaveTimer) clearTimeout(leaveTimer);
         }]);
